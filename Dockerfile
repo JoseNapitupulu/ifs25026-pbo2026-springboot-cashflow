@@ -26,8 +26,9 @@ RUN useradd --system --uid 1001 --create-home appuser
 COPY --from=build /app/target/*.jar app.jar
 USER appuser
 
-# application.yaml membaca ${APP_PORT}; nilai ini bisa ditimpa lewat dashboard Render
-ENV APP_PORT=10000
+# application.yaml membaca ${PORT:${APP_PORT:8080}}; Render menyuntikkan PORT sendiri,
+# nilai di bawah hanya berlaku saat image dijalankan tanpa platform tersebut.
+ENV PORT=10000
 EXPOSE 10000
 
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
