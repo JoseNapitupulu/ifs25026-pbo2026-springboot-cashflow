@@ -1,20 +1,22 @@
 # syntax=docker/dockerfile:1
 
 # ---------- Tahap build ----------
-FROM eclipse-temurin:25-jdk AS build
+# Image Maven resmi dipakai supaya Maven sudah tersedia di dalam container.
+# Maven Wrapper (./mvnw) sengaja tidak dipakai: skrip itu mengunduh distribusi
+# Maven lalu mengekstraknya, dan image JRE/JDK tidak menyediakan `unzip`
+# sehingga ekstraksi arsip .zip gagal ("tar: Cannot open: Function not implemented").
+FROM maven:3.10-eclipse-temurin-25 AS build
 WORKDIR /app
 
-# Wrapper dan POM disalin lebih dulu agar cache layer dependency bisa dipakai ulang
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
-RUN chmod +x mvnw \
-    && ./mvnw -B -DskipTests dependency:go-offline
+# POM disalin lebih dulu agar cache layer dependency bisa dipakai ulang
+COPY pom.xml ./
+RUN mvn -B -DskipTests dependency:go-offline
 
 COPY src/ src/
 
 # Profil production menjalankan vaadin:build-frontend, sehingga bundle frontend
 # ikut terpaket dan aplikasi tidak berjalan dalam mode development.
-RUN ./mvnw -B -Pproduction -DskipTests package
+RUN mvn -B -Pproduction -DskipTests package
 
 # ---------- Tahap runtime ----------
 FROM eclipse-temurin:25-jre AS runtime
