@@ -10,7 +10,9 @@ spring:
       enabled: true
 
 server:
-  port: ${APP_PORT:8080}
+  # PORT dipakai platform hosting (mis. Render) yang menyuntikkan port sendiri;
+  # APP_PORT tetap dipakai saat pengembangan lokal lewat .env.
+  port: ${PORT:${APP_PORT:8080}}
 
 vaadin:
   launch-browser: false
