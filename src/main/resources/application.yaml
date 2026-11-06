@@ -13,6 +13,11 @@ server:
   # PORT dipakai platform hosting (mis. Render) yang menyuntikkan port sendiri;
   # APP_PORT tetap dipakai saat pengembangan lokal lewat .env.
   port: ${PORT:${APP_PORT:8080}}
+  # Kompresi respons memperingan transfer bundle Vaadin yang berukuran besar.
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,text/plain,text/javascript,application/javascript,application/json,image/svg+xml
+    min-response-size: 1024
 
 vaadin:
   launch-browser: false
