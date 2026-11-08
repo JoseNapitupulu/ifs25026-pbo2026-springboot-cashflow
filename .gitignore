@@ -8,6 +8,14 @@ target/
 ### Vaadin ###
 src/main/frontend/generated/
 node_modules/
+# Berkas yang dibuat ulang oleh vaadin:build-frontend saat build produksi.
+src/main/bundles/
+package.json
+package-lock.json
+tsconfig.json
+types.d.ts
+vite.config.ts
+vite.generated.ts
 !**/src/main/**/target/
 !**/src/test/**/target/
 
