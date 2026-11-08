@@ -15,28 +15,36 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 /**
- * Menyajikan halaman publik "/about" sebagai HTML yang sudah jadi (server-rendered).
+ * Menyajikan berkas publik (halaman "/about", sitemap, robots) sebagai isi yang sudah jadi.
  *
  * <p>Alasannya: Vaadin Flow mengirim kerangka kosong lalu menggambar isi halaman lewat
  * JavaScript. Crawler dan Lighthouse yang hanya membaca HTML awal jadi tidak menemukan
  * judul, deskripsi, maupun konten. Dengan menyajikan berkas statis langsung dari filter ini,
  * "/about" tetap 200 tanpa login, ringan (tanpa JavaScript), dan mudah diindeks.</p>
+ *
+ * <p>Sitemap dan robots memakai filter yang sama karena keduanya wajib memuat URL absolut,
+ * yang hanya bisa diketahui saat permintaan datang.</p>
  */
 public class PublicPageFilter extends OncePerRequestFilter {
 
     private static final Logger LOG = LoggerFactory.getLogger(PublicPageFilter.class);
 
-    /** Placeholder di berkas HTML yang diganti URL absolut halaman ini. */
+    /** Placeholder di berkas yang diganti URL absolut halaman ini (mis. canonical, og:url). */
     private static final String CANONICAL_PLACEHOLDER = "__CANONICAL_URL__";
+
+    /** Placeholder untuk origin situs, dipakai sitemap dan robots. */
+    private static final String BASE_PLACEHOLDER = "__BASE_URL__";
 
     private final String resourcePath;
     private final String publicPath;
+    private final String contentType;
     private final String cacheControl;
     private volatile String template;
 
-    public PublicPageFilter(String resourcePath, String publicPath, String cacheControl) {
+    public PublicPageFilter(String resourcePath, String publicPath, String contentType, String cacheControl) {
         this.resourcePath = resourcePath;
         this.publicPath = publicPath;
+        this.contentType = contentType;
         this.cacheControl = cacheControl;
     }
 
@@ -55,11 +63,13 @@ public class PublicPageFilter extends OncePerRequestFilter {
 
         // Canonical harus absolut agar diterima crawler dan Lighthouse. URL dirakit dari
         // permintaan (mendukung header proxy SnapDeploy/Render), bukan di-hardcode.
-        byte[] body = page.replace(CANONICAL_PLACEHOLDER, canonicalUrl(request))
+        String baseUrl = baseUrl(request);
+        byte[] body = page.replace(BASE_PLACEHOLDER, baseUrl)
+                .replace(CANONICAL_PLACEHOLDER, baseUrl + publicPath)
                 .getBytes(StandardCharsets.UTF_8);
 
         response.setStatus(HttpServletResponse.SC_OK);
-        response.setContentType("text/html;charset=UTF-8");
+        response.setContentType(contentType);
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Cache-Control", cacheControl);
         response.setHeader("X-Content-Type-Options", "nosniff");
@@ -71,15 +81,15 @@ public class PublicPageFilter extends OncePerRequestFilter {
         response.flushBuffer();
     }
 
-    /** Schema + host dari permintaan, menghormati header proxy bila ada. */
-    private String canonicalUrl(HttpServletRequest request) {
+    /** Origin situs (schema + host) dari permintaan, menghormati header proxy bila ada. */
+    private String baseUrl(HttpServletRequest request) {
         String scheme = firstNonBlank(request.getHeader("X-Forwarded-Proto"), request.getScheme());
         String host = firstNonBlank(request.getHeader("X-Forwarded-Host"), request.getHeader("Host"));
         if (host == null || host.isBlank()) {
             host = request.getServerName()
                     + (request.getServerPort() > 0 ? ":" + request.getServerPort() : "");
         }
-        return scheme.toLowerCase(Locale.ROOT) + "://" + host + publicPath;
+        return scheme.toLowerCase(Locale.ROOT) + "://" + host;
     }
 
     private static String firstNonBlank(String first, String second) {
