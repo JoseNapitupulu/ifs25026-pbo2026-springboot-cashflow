@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tentang Cashflow - Aplikasi Pencatat Pemasukan dan Pengeluaran</title>
+  <meta name="description" content="Cashflow adalah aplikasi web gratis untuk mencatat pemasukan dan pengeluaran harian, lengkap dengan ringkasan saldo, pencarian transaksi, dan pengurutan data.">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="theme-color" content="#1e3a8a">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="__CANONICAL_URL__">
+  <meta property="og:locale" content="id_ID">
+  <meta property="og:site_name" content="Cashflow">
+  <meta property="og:title" content="Tentang Cashflow - Aplikasi Pencatat Pemasukan dan Pengeluaran">
+  <meta property="og:description" content="Cashflow adalah aplikasi web gratis untuk mencatat pemasukan dan pengeluaran harian, lengkap dengan ringkasan saldo, pencarian transaksi, dan pengurutan data.">
+  <link rel="canonical" href="__CANONICAL_URL__">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --brand-strong: #1e3a8a;
+      --brand: #1d4ed8;
+      --border: #cbd5e1;
+      --focus: #fbbf24;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--page-bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 1rem;
+      line-height: 1.65;
+    }
+
+    a {
+      color: var(--brand);
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+
+    a:focus-visible,
+    a:focus {
+      outline: 3px solid var(--brand);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    .skip-link {
+      position: absolute;
+      left: 1rem;
+      top: -4rem;
+      padding: 0.65rem 1rem;
+      background-color: #ffffff;
+      color: var(--brand-strong);
+      font-weight: 600;
+      border-radius: 0 0 8px 8px;
+      z-index: 10;
+    }
+
+    .skip-link:focus {
+      top: 0;
+    }
+
+    .site-header {
+      background-color: var(--brand-strong);
+      color: #ffffff;
+    }
+
+    .site-header a {
+      color: #ffffff;
+    }
+
+    .site-header a:focus-visible,
+    .site-header a:focus {
+      outline: 3px solid var(--focus);
+      outline-offset: 2px;
+    }
+
+    .site-header-inner {
+      max-width: 64rem;
+      margin: 0 auto;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 8px;
+      background-color: #ffffff;
+      color: var(--brand-strong);
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .site-nav ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .site-nav a {
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .site-nav a:hover {
+      text-decoration: underline;
+    }
+
+    .site-nav a[aria-current="page"] {
+      text-decoration: underline;
+      text-decoration-thickness: 3px;
+    }
+
+    main {
+      max-width: 64rem;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 3rem;
+    }
+
+    .page-intro {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-left: 6px solid var(--brand);
+      border-radius: 12px;
+      padding: 1.75rem 1.5rem;
+    }
+
+    h1 {
+      margin: 0 0 0.75rem;
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      line-height: 1.25;
+      color: var(--brand-strong);
+    }
+
+    h2 {
+      margin: 2.25rem 0 0.75rem;
+      font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+      line-height: 1.3;
+      color: var(--brand-strong);
+    }
+
+    p {
+      margin: 0 0 1rem;
+    }
+
+    .lead {
+      margin: 0;
+      font-size: 1.075rem;
+      color: var(--text-muted);
+    }
+
+    section ul,
+    section ol {
+      margin: 0 0 1rem;
+      padding-left: 1.4rem;
+    }
+
+    section li {
+      margin-bottom: 0.5rem;
+    }
+
+    section li:last-child {
+      margin-bottom: 0;
+    }
+
+    .callout {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .callout p:last-child {
+      margin-bottom: 0;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 2rem;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 0.7rem 1.25rem;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 2px solid var(--brand);
+    }
+
+    .button-primary {
+      background-color: var(--brand);
+      color: #ffffff;
+    }
+
+    .button-primary:hover {
+      background-color: var(--brand-strong);
+      border-color: var(--brand-strong);
+    }
+
+    .button-secondary {
+      background-color: #ffffff;
+      color: var(--brand-strong);
+    }
+
+    .button-secondary:hover {
+      background-color: #e2e8f0;
+    }
+
+    .site-footer {
+      border-top: 1px solid var(--border);
+      background-color: var(--card-bg);
+    }
+
+    .site-footer-inner {
+      max-width: 64rem;
+      margin: 0 auto;
+      padding: 1.25rem;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .site-footer p {
+      margin: 0;
+    }
+
+    @media (max-width: 40rem) {
+      .site-header-inner {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      main {
+        padding-top: 1.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#konten-utama">Lewati ke konten utama</a>
+
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark" aria-hidden="true">CF</span>
+        <span>Cashflow</span>
+      </a>
+      <nav class="site-nav" aria-label="Navigasi utama">
+        <ul>
+          <li><a href="/">Halaman utama aplikasi</a></li>
+          <li><a href="/about" aria-current="page">Tentang Cashflow</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="konten-utama">
+    <div class="page-intro">
+      <h1>Tentang Cashflow</h1>
+      <p class="lead">
+        Cashflow adalah aplikasi web untuk mencatat pemasukan dan pengeluaran sehari-hari.
+        Setiap transaksi dirangkum menjadi total pemasukan, total pengeluaran, dan saldo akhir
+        sehingga kondisi keuangan bisa dilihat dalam satu halaman.
+      </p>
+    </div>
+
+    <section aria-labelledby="fitur-utama">
+      <h2 id="fitur-utama">Fitur Utama</h2>
+      <ul>
+        <li>Mencatat transaksi pemasukan dan pengeluaran beserta keterangannya.</li>
+        <li>Menampilkan ringkasan total transaksi, total pemasukan, total pengeluaran, dan saldo.</li>
+        <li>Mencari transaksi berdasarkan keterangan yang diingat.</li>
+        <li>Mengurutkan transaksi berdasarkan beberapa pilihan urutan.</li>
+        <li>Menghapus transaksi yang sudah tidak diperlukan.</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="cara-menggunakan">
+      <h2 id="cara-menggunakan">Cara Menggunakan</h2>
+      <ol>
+        <li>Buka halaman utama aplikasi Cashflow.</li>
+        <li>Pilih tombol tambah pemasukan atau tambah pengeluaran.</li>
+        <li>Isi keterangan dan jumlah nominal, lalu simpan transaksi.</li>
+        <li>Gunakan kolom pencarian atau pilihan pengurutan untuk meninjau data.</li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="catatan-data">
+      <h2 id="catatan-data">Catatan tentang Data</h2>
+      <div class="callout">
+        <p>
+          Data transaksi disimpan di memori server, sehingga daftar transaksi dimulai dari kosong
+          setiap kali aplikasi dijalankan ulang. Aplikasi ini cocok untuk latihan pencatatan
+          keuangan dan demonstrasi alur kerja, bukan untuk penyimpanan pembukuan jangka panjang.
+        </p>
+      </div>
+    </section>
+
+    <section aria-labelledby="teknologi">
+      <h2 id="teknologi">Teknologi yang Dipakai</h2>
+      <p>
+        Aplikasi dibangun dengan Java 25, Spring Boot 4, dan Vaadin 25 menggunakan arsitektur
+        clean architecture yang memisahkan domain, use case, adapter, dan tampilan.
+      </p>
+    </section>
+
+    <div class="actions">
+      <a class="button button-primary" href="/">Buka aplikasi Cashflow</a>
+      <a class="button button-secondary" href="/about">Muat ulang halaman tentang ini</a>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <p>Cashflow - aplikasi pencatat pemasukan dan pengeluaran harian.</p>
+    </div>
+  </footer>
+</body>
+</html>

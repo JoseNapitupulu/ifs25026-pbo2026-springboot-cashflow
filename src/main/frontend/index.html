@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cashflow - Catatan Pemasukan dan Pengeluaran</title>
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#1e3a8a">
+  <style>
+    html, body, #outlet {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+    }
+
+    /*
+    Tinggi aplikasi untuk mode iOS home screen:
+    - 100% tidak menutupi seluruh layar.
+    - 100vh benar di iOS 18 tetapi terlalu tinggi di iOS 17 (Safari) dan benar di mode standalone.
+    - 100lvh terlalu tinggi di Safari, 100svh terlalu pendek di mode standalone.
+    - 100dvh tidak konsisten pada render pertama saat dibuka dari home screen.
+    Jadi 100% untuk kasus biasa, dan 100lvh khusus aplikasi mode standalone.
+    */
+    @supports (-webkit-touch-callout: none) {
+      @media (display-mode: standalone) {
+        html {
+          height: 100lvh;
+        }
+      }
+    }
+  </style>
+  <!-- index.ts is included here automatically (either by the dev server or during the build) -->
+</head>
+<body>
+  <!-- This outlet div is where the views are rendered -->
+  <div id="outlet"></div>
+</body>
+</html>
