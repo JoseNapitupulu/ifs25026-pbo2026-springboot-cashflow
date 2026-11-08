@@ -7,8 +7,12 @@ import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.ColumnTextAlign;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Header;
+import com.vaadin.flow.component.html.Main;
+import com.vaadin.flow.component.html.Nav;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -35,7 +39,7 @@ import java.util.List;
  * pengurutan berbasis {@link SortOption}, serta dialog tambah dan hapus.
  */
 @Route("")
-@PageTitle("Cashflow")
+@PageTitle("Cashflow - Catatan Pemasukan dan Pengeluaran")
 public class FinanceView extends VerticalLayout {
 
     private final FinanceUseCase financeUseCase;
@@ -60,11 +64,37 @@ public class FinanceView extends VerticalLayout {
         setSpacing(true);
 
         H1 title = new H1("Cashflow");
+        // Halaman "Tentang" sengaja berupa halaman publik statis (/about), bukan view Vaadin,
+        // sehingga tautan memakai anchor biasa dan tetap bisa diindeks crawler.
+        Anchor aboutLink = new Anchor("/about", "Tentang Cashflow");
+        Nav navigation = new Nav(aboutLink);
+        navigation.getElement().setAttribute("aria-label", "Navigasi utama");
+
+        Header header = new Header(title, navigation);
+        header.setWidthFull();
+        header.getStyle()
+                .set("display", "flex")
+                .set("align-items", "baseline")
+                .set("justify-content", "space-between")
+                .set("flex-wrap", "wrap")
+                .set("gap", "0.75rem");
 
         configureGrid();
         configureToolbar();
 
-        add(title, buildSummaryCards(), buildToolbar(), statusLabel, grid);
+        // Status daftar transaksi diumumkan ulang saat isi berubah.
+        statusLabel.getElement().setAttribute("aria-live", "polite");
+
+        Main main = new Main(buildSummaryCards(), buildToolbar(), statusLabel, grid);
+        main.setWidthFull();
+        main.getStyle()
+                .set("display", "flex")
+                .set("flex-direction", "column")
+                .set("flex-grow", "1")
+                .set("gap", "1rem")
+                .set("min-height", "0");
+
+        add(header, main);
         refreshAll();
     }
 
@@ -160,7 +190,10 @@ public class FinanceView extends VerticalLayout {
                 .setFlexGrow(0);
 
         grid.setEmptyStateComponent(emptyState);
-        grid.setSizeFull();
+        grid.setWidthFull();
+        grid.getStyle().set("flex-grow", "1").set("min-height", "0");
+        // Grid Vaadin adalah tabel tanpa elemen <caption>; beri nama aksesibel eksplisit.
+        grid.getElement().setAttribute("aria-label", "Daftar transaksi cashflow");
     }
 
     private HorizontalLayout createActionButtons(Transaction transaction) {
@@ -174,13 +207,19 @@ public class FinanceView extends VerticalLayout {
     }
 
     private void configureToolbar() {
+        // Label eksplisit (bukan hanya placeholder) agar setiap input punya <label for>
+        // dan terbaca oleh pembaca layar.
+        searchField.setLabel("Cari transaksi");
         searchField.setPlaceholder("Cari keterangan...");
-        searchField.setPrefixComponent(VaadinIcon.SEARCH.create());
+        Span searchIcon = new Span(VaadinIcon.SEARCH.create());
+        searchIcon.getElement().setAttribute("aria-hidden", "true");
+        searchField.setPrefixComponent(searchIcon);
         searchField.setClearButtonVisible(true);
 
         sortSelect.setItems(SortOption.values());
         sortSelect.setItemLabelGenerator(SortOption::label);
-        sortSelect.setPlaceholder("Urutkan");
+        sortSelect.setLabel("Urutkan transaksi");
+        sortSelect.setPlaceholder("Pilih urutan");
         sortSelect.setClearButtonVisible(true);
         sortSelect.addValueChangeListener(event -> {
             SortOption option = event.getValue();
@@ -330,6 +369,8 @@ public class FinanceView extends VerticalLayout {
         dialog.setMaxWidth("95vw");
         dialog.setResizable(false);
         dialog.addClassName("cashflow-form-dialog");
+        // Dialog ini dibuat manual (bukan setHeaderTitle), jadi nama aksesibelnya diisi eksplisit.
+        dialog.getElement().setAttribute("aria-label", title);
 
         boolean danger = tone == DialogTone.DANGER;
         String headerBackground = danger ? "#DC2626" : "#2563EB";
