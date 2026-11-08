@@ -23,11 +23,17 @@ public class PublicPageConfig {
     private static final String HTML = "text/html;charset=UTF-8";
     private static final int ORDER = Ordered.HIGHEST_PRECEDENCE + 10;
 
+    /**
+     * Ditegaskan lewat header, bukan hanya meta tag, agar tidak tertimpa noindex dari proxy.
+     */
+    private static final String INDEXABLE = "index, follow";
+
     @Bean
     public FilterRegistrationBean<PublicPageFilter> publicAboutPageFilter() {
         return register(
                 "publicAboutPageFilter",
-                new PublicPageFilter("META-INF/resources/about.html", "/about", HTML, "public, max-age=600"),
+                new PublicPageFilter("META-INF/resources/about.html", "/about", HTML,
+                        "public, max-age=600", INDEXABLE),
                 "/about", "/about/"
         );
     }
@@ -37,7 +43,7 @@ public class PublicPageConfig {
         return register(
                 "publicSitemapFilter",
                 new PublicPageFilter("META-INF/resources/sitemap.xml", "/sitemap.xml",
-                        "application/xml;charset=UTF-8", "public, max-age=3600"),
+                        "application/xml;charset=UTF-8", "public, max-age=3600", null),
                 "/sitemap.xml"
         );
     }
@@ -47,7 +53,7 @@ public class PublicPageConfig {
         return register(
                 "publicRobotsFilter",
                 new PublicPageFilter("META-INF/resources/robots.txt", "/robots.txt",
-                        "text/plain;charset=UTF-8", "public, max-age=3600"),
+                        "text/plain;charset=UTF-8", "public, max-age=3600", null),
                 "/robots.txt"
         );
     }
