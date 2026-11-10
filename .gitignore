@@ -5,6 +5,10 @@ target/
 ### Environment ###
 .env
 
+### Docker (hanya dipakai secara lokal, tidak di-commit) ###
+Dockerfile
+.dockerignore
+
 ### Vaadin ###
 src/main/frontend/generated/
 node_modules/
