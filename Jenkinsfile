@@ -16,29 +16,6 @@ pipeline {
         MAVEN_LOCAL_REPO = '/var/jenkins_home/.m2/repository'
     }
 
-    parameters {
-        string(
-            name: 'URL_REDEPLOY',
-            defaultValue: '',
-            description: 'Endpoint request redeploy. Kosongkan untuk memakai environment variable job.'
-        )
-        string(
-            name: 'URL_PROGRESS',
-            defaultValue: '',
-            description: 'Endpoint cek progress deploy. Kosongkan untuk memakai environment variable job.'
-        )
-        string(
-            name: 'WEBSITE_ID',
-            defaultValue: '',
-            description: 'ID website tujuan deploy. Kosongkan untuk memakai environment variable job.'
-        )
-        password(
-            name: 'DEPLOY_TOKEN',
-            defaultValue: '',
-            description: 'Token deploy. Kosongkan untuk memakai environment variable job.'
-        )
-    }
-
     stages {
 
         // ============================================================
@@ -340,232 +317,151 @@ pipeline {
                     echo "       START APPLICATION DEPLOYMENT"
                     echo "=========================================="
 
+                    echo "Artifact URL:"
+                    echo "${env.ARTIFACT_URL}"
+
                     // ==================================================
-                    // 0. VALIDASI KONFIGURASI DEPLOY
+                    // 1. REQUEST REDEPLOYMENT
                     // ==================================================
-                    // Nilai dibaca dari parameter build bila diisi, selain itu
-                    // dari environment variable job Jenkins. Tanpa validasi ini
-                    // nilai kosong membuat curl dipanggil tanpa URL dan gagal
-                    // dengan pesan samar:
-                    // "option : blank argument where content is expected".
 
-                    // Parameter bertipe 'password' disimpan sebagai
-                    // hudson.util.Secret, bukan String, sehingga tidak punya
-                    // method trim()/isEmpty(). Nilainya harus diambil lewat
-                    // getPlainText() lebih dulu.
-                    def readDeploySetting = { String name ->
-                        def value = params[name]
-                        if (value != null && !(value instanceof CharSequence)) {
-                            value = value.getPlainText()
+                    echo ""
+                    echo "=== Request Redeployment ==="
+
+                    def redeployResponse = sh(
+                        script: '''
+                            set -e
+
+                            curl -sS --fail-with-body \
+                                -X POST "$URL_REDEPLOY" \
+                                -H "Content-Type: application/json" \
+                                -d "{
+                                    \\"token_access\\": \\"$DEPLOY_TOKEN\\",
+                                    \\"website_id\\": \\"$WEBSITE_ID\\",
+                                    \\"source_url\\": \\"$ARTIFACT_URL\\",
+                                    \\"source_type\\": \\"jenkins\\"
+                                }"
+                        ''',
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Redeploy Response:"
+                    echo redeployResponse
+
+                    // ==================================================
+                    // 2. POLLING DEPLOYMENT PROGRESS
+                    // ==================================================
+
+                    echo ""
+                    echo "=== Waiting For Deployment ==="
+
+                    def maxAttempts = 120
+                    def attempt = 0
+                    def deploymentStatus = 'IN_PROGRESS'
+
+                    while (deploymentStatus == 'IN_PROGRESS') {
+
+                        attempt++
+
+                        if (attempt > maxAttempts) {
+                            error(
+                                "Deployment timeout. " +
+                                "Status masih IN_PROGRESS setelah " +
+                                "${maxAttempts} attempts."
+                            )
                         }
-                        value = (value ?: '').toString().trim()
-                        if (!value) {
-                            value = (env[name] ?: '').toString().trim()
-                        }
-                        return value
-                    }
 
-                    def deployConfig = [
-                        URL_REDEPLOY: readDeploySetting('URL_REDEPLOY'),
-                        URL_PROGRESS: readDeploySetting('URL_PROGRESS'),
-                        WEBSITE_ID  : readDeploySetting('WEBSITE_ID'),
-                        DEPLOY_TOKEN: readDeploySetting('DEPLOY_TOKEN')
-                    ]
-
-                    def missingVars = deployConfig
-                        .findAll { name, value -> !value }
-                        .keySet()
-                        .sort()
-
-                    if (missingVars) {
-                        error(
-                            "Konfigurasi deploy belum lengkap: " +
-                            "${missingVars.join(', ')}. " +
-                            "Isi sebagai parameter build atau environment " +
-                            "variable job Jenkins."
-                        )
-                    }
-
-                    def artifactUrl = (env.ARTIFACT_URL ?: '').trim()
-                    if (!artifactUrl) {
-                        error(
-                            "ARTIFACT_URL kosong, stage 'Publish Application' " +
-                            "belum menyiapkan URL artifact."
-                        )
-                    }
-
-                    echo "Artifact URL : ${artifactUrl}"
-                    echo "Redeploy URL : ${deployConfig.URL_REDEPLOY}"
-                    echo "Website ID   : ${deployConfig.WEBSITE_ID}"
-
-                    withEnv([
-                        "URL_REDEPLOY=${deployConfig.URL_REDEPLOY}",
-                        "URL_PROGRESS=${deployConfig.URL_PROGRESS}"
-                    ]) {
-
-                        // Body JSON ditulis Groovy ke file agar tidak perlu
-                        // escaping manual di dalam sh (rawan rusak).
-
-                        writeJSON(
-                            file: 'deploy-request.json',
-                            json: [
-                                token_access: deployConfig.DEPLOY_TOKEN,
-                                website_id  : deployConfig.WEBSITE_ID,
-                                source_url  : artifactUrl,
-                                source_type : 'jenkins'
-                            ]
-                        )
-
-                        writeJSON(
-                            file: 'deploy-progress.json',
-                            json: [
-                                token_access: deployConfig.DEPLOY_TOKEN,
-                                website_id  : deployConfig.WEBSITE_ID
-                            ]
-                        )
-
-                        // ==============================================
-                        // 1. REQUEST REDEPLOYMENT
-                        // ==============================================
+                        sleep time: 5, unit: 'SECONDS'
 
                         echo ""
-                        echo "=== Request Redeployment ==="
+                        echo "=== Checking Deployment Progress (${attempt}/${maxAttempts}) ==="
 
-                        def redeployResponse = sh(
+                        def progressResponse = sh(
                             script: '''
                                 set -e
 
-                                curl -sS --fail-with-body \\
-                                    -X POST "$URL_REDEPLOY" \\
-                                    -H "Content-Type: application/json" \\
-                                    --data-binary @deploy-request.json
+                                curl -sS --fail-with-body \
+                                    -X POST "$URL_PROGRESS" \
+                                    -H "Content-Type: application/json" \
+                                    -d "{
+                                        \\"token_access\\": \\"$DEPLOY_TOKEN\\",
+                                        \\"website_id\\": \\"$WEBSITE_ID\\"
+                                    }"
                             ''',
                             returnStdout: true
                         ).trim()
 
-                        echo "Redeploy Response:"
-                        echo redeployResponse
+                        echo "Progress Response:"
+                        echo progressResponse
 
-                        // ==============================================
-                        // 2. POLLING DEPLOYMENT PROGRESS
-                        // ==============================================
+                        // ==================================================
+                        // PARSE JSON
+                        // ==================================================
 
-                        echo ""
-                        echo "=== Waiting For Deployment ==="
+                        def json = readJSON text: progressResponse
 
-                        def maxAttempts = 120
-                        def attempt = 0
-                        def deploymentStatus = 'IN_PROGRESS'
+                        deploymentStatus = json?.data?.status
+                            ?.toString()
+                            ?.toUpperCase()
 
-                        while (deploymentStatus == 'IN_PROGRESS') {
-
-                            attempt++
-
-                            if (attempt > maxAttempts) {
-                                error(
-                                    "Deployment timeout. Status masih " +
-                                    "IN_PROGRESS setelah ${maxAttempts} attempts."
-                                )
-                            }
-
-                            sleep time: 5, unit: 'SECONDS'
-
-                            echo ""
-                            echo "=== Checking Deployment Progress (${attempt}/${maxAttempts}) ==="
-
-                            def progressResponse = sh(
-                                script: '''
-                                    set -e
-
-                                    curl -sS --fail-with-body \\
-                                        -X POST "$URL_PROGRESS" \\
-                                        -H "Content-Type: application/json" \\
-                                        --data-binary @deploy-progress.json
-                                ''',
-                                returnStdout: true
-                            ).trim()
-
-                            echo "Progress Response:"
-                            echo progressResponse
-
-                            // ==========================================
-                            // PARSE JSON
-                            // ==========================================
-
-                            def json
-                            try {
-                                json = readJSON text: progressResponse
-                            } catch (ignored) {
-                                error(
-                                    "Response progress bukan JSON valid: " +
-                                    progressResponse
-                                )
-                            }
-
-                            deploymentStatus = json?.data?.status
-                                ?.toString()
-                                ?.toUpperCase()
-
-                            if (!deploymentStatus) {
-                                error(
-                                    "Response progress tidak memiliki data.status"
-                                )
-                            }
-
-                            echo "Deployment Status: ${deploymentStatus}"
-
-                            // ==========================================
-                            // SUCCESS
-                            // ==========================================
-
-                            if (deploymentStatus == 'SUCCESS') {
-
-                                echo ""
-                                echo "=========================================="
-                                echo "       ✅ DEPLOYMENT SUCCESS"
-                                echo "=========================================="
-
-                                break
-                            }
-
-                            // ==========================================
-                            // FAIL
-                            // ==========================================
-
-                            if (deploymentStatus == 'FAIL') {
-
-                                echo ""
-                                echo "=========================================="
-                                echo "       ❌ DEPLOYMENT FAILED"
-                                echo "=========================================="
-
-                                def deploymentLog =
-                                    json?.data?.log
-                                        ?: 'Deployment failed tanpa log.'
-
-                                echo ""
-                                echo "========== DEPLOYMENT LOG =========="
-                                echo deploymentLog
-                                echo "===================================="
-
-                                error(
-                                    "Deployment gagal untuk website " +
-                                    "${deployConfig.WEBSITE_ID}"
-                                )
-                            }
-
-                            // ==========================================
-                            // OTHER STATUS
-                            // ==========================================
-
-                            echo "Deployment masih berjalan..."
+                        if (!deploymentStatus) {
+                            error(
+                                "Response progress tidak memiliki data.status"
+                            )
                         }
 
-                        echo ""
-                        echo "=========================================="
-                        echo "       DEPLOYMENT FINISHED"
-                        echo "=========================================="
+                        echo "Deployment Status: ${deploymentStatus}"
+
+                        // ==================================================
+                        // SUCCESS
+                        // ==================================================
+
+                        if (deploymentStatus == 'SUCCESS') {
+
+                            echo ""
+                            echo "=========================================="
+                            echo "       ✅ DEPLOYMENT SUCCESS"
+                            echo "=========================================="
+
+                            break
+                        }
+
+                        // ==================================================
+                        // FAIL
+                        // ==================================================
+
+                        if (deploymentStatus == 'FAIL') {
+
+                            echo ""
+                            echo "=========================================="
+                            echo "       ❌ DEPLOYMENT FAILED"
+                            echo "=========================================="
+
+                            def deploymentLog =
+                                json?.data?.log
+                                    ?: 'Deployment failed tanpa log.'
+
+                            echo ""
+                            echo "========== DEPLOYMENT LOG =========="
+                            echo deploymentLog
+                            echo "===================================="
+
+                            error(
+                                "Deployment gagal untuk website " +
+                                "${WEBSITE_ID}"
+                            )
+                        }
+
+                        // ==================================================
+                        // OTHER STATUS
+                        // ==================================================
+
+                        echo "Deployment masih berjalan..."
                     }
+
+                    echo ""
+                    echo "=========================================="
+                    echo "       DEPLOYMENT FINISHED"
+                    echo "=========================================="
                 }
             }
         }
