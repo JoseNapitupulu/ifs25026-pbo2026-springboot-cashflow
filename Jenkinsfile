@@ -349,11 +349,27 @@ pipeline {
                     // dengan pesan samar:
                     // "option : blank argument where content is expected".
 
+                    // Parameter bertipe 'password' disimpan sebagai
+                    // hudson.util.Secret, bukan String, sehingga tidak punya
+                    // method trim()/isEmpty(). Nilainya harus diambil lewat
+                    // getPlainText() lebih dulu.
+                    def readDeploySetting = { String name ->
+                        def value = params[name]
+                        if (value != null && !(value instanceof CharSequence)) {
+                            value = value.getPlainText()
+                        }
+                        value = (value ?: '').toString().trim()
+                        if (!value) {
+                            value = (env[name] ?: '').toString().trim()
+                        }
+                        return value
+                    }
+
                     def deployConfig = [
-                        URL_REDEPLOY: (params.URL_REDEPLOY ?: env.URL_REDEPLOY ?: '').trim(),
-                        URL_PROGRESS: (params.URL_PROGRESS ?: env.URL_PROGRESS ?: '').trim(),
-                        WEBSITE_ID  : (params.WEBSITE_ID   ?: env.WEBSITE_ID   ?: '').trim(),
-                        DEPLOY_TOKEN: (params.DEPLOY_TOKEN ?: env.DEPLOY_TOKEN ?: '').trim()
+                        URL_REDEPLOY: readDeploySetting('URL_REDEPLOY'),
+                        URL_PROGRESS: readDeploySetting('URL_PROGRESS'),
+                        WEBSITE_ID  : readDeploySetting('WEBSITE_ID'),
+                        DEPLOY_TOKEN: readDeploySetting('DEPLOY_TOKEN')
                     ]
 
                     def missingVars = deployConfig
